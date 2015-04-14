@@ -3,29 +3,28 @@ package nl.nl2312.rxcupboard;
 import android.database.sqlite.SQLiteDatabase;
 import android.test.InstrumentationTestCase;
 
+import nl.qbusict.cupboard.Cupboard;
+import nl.qbusict.cupboard.CupboardBuilder;
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
-
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 public class CrudTest extends InstrumentationTestCase {
 
 	private static final String TEST_DATABASE = "RxCupboardTest.db";
 
-	private TestDbHelper helper;
 	private SQLiteDatabase db;
-	private RxCupboard rxCupboard;
+	private RxDatabase rxDatabase;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		cupboard().register(TestEntity.class);
+		Cupboard cupboard = new CupboardBuilder().build();
+		cupboard.register(TestEntity.class);
 		getInstrumentation().getContext().deleteDatabase(TEST_DATABASE);
-		helper = new TestDbHelper(getInstrumentation().getContext(), TEST_DATABASE);
-		db = helper.getWritableDatabase();
-		rxCupboard = RxCupboard.with(db);
+		db = new TestDbHelper(getInstrumentation().getContext(), cupboard, TEST_DATABASE).getWritableDatabase();
+		rxDatabase = RxCupboard.with(cupboard, db);
 	}
 
 	public void testPutCountGetDelete() {
@@ -37,10 +36,10 @@ public class CrudTest extends InstrumentationTestCase {
 
 		// Simple put of new item
 		assertNull(testEntity._id);
-		rxCupboard.put(testEntity);
+		rxDatabase.put(testEntity);
 
 		// Get returns one item
-		Observable<TestEntity> getObservable = rxCupboard.get(TestEntity.class, testEntity._id);
+		Observable<TestEntity> getObservable = rxDatabase.get(TestEntity.class, testEntity._id);
 		getObservable.count().subscribe(new Action1<Integer>() {
 			@Override
 			public void call(Integer count) {
@@ -49,7 +48,7 @@ public class CrudTest extends InstrumentationTestCase {
 		});
 
 		// Count
-		Observable<Long> countObservable = rxCupboard.count(TestEntity.class);
+		Observable<Long> countObservable = rxDatabase.count(TestEntity.class);
 		countObservable.subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
@@ -58,7 +57,7 @@ public class CrudTest extends InstrumentationTestCase {
 		});
 
 		// Get returns correct item
-		Observable<TestEntity> getEntityObservable = rxCupboard.get(TestEntity.class, testEntity._id);
+		Observable<TestEntity> getEntityObservable = rxDatabase.get(TestEntity.class, testEntity._id);
 		getEntityObservable.subscribe(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity getEntity) {
@@ -72,16 +71,16 @@ public class CrudTest extends InstrumentationTestCase {
 		long updatedTime = System.currentTimeMillis();
 		testEntity.string = "Updated";
 		testEntity.time = updatedTime;
-		rxCupboard.put(testEntity);
+		rxDatabase.put(testEntity);
 		assertNotNull(testEntity._id);
 		assertEquals(testEntity.string, "Updated");
 		assertNotSame(testEntity.time, updatedTime);
 
 		// Simple delete
-		boolean deleted = rxCupboard.delete(testEntity);
+		boolean deleted = rxDatabase.delete(testEntity);
 		assertEquals(true, deleted);
 
-		Observable<Long> checkDeleteObservable = rxCupboard.count(TestEntity.class);
+		Observable<Long> checkDeleteObservable = rxDatabase.count(TestEntity.class);
 		checkDeleteObservable.subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
@@ -90,7 +89,7 @@ public class CrudTest extends InstrumentationTestCase {
 		});
 
 		// Non-existing delete
-		boolean missingDeleted = rxCupboard.delete(testEntity);
+		boolean missingDeleted = rxDatabase.delete(testEntity);
 		assertEquals(false, missingDeleted);
 
 	}
@@ -104,7 +103,7 @@ public class CrudTest extends InstrumentationTestCase {
 
 		// Put as chain action
 		assertNull(testEntity._id);
-		Observable.just(testEntity).doOnNext(rxCupboard.put()).subscribe(new Action1<TestEntity>() {
+		Observable.just(testEntity).doOnNext(rxDatabase.put()).subscribe(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				assertNotNull(testEntity._id);
@@ -113,7 +112,7 @@ public class CrudTest extends InstrumentationTestCase {
 			}
 		});
 
-		Observable<Long> checkPutObservable = rxCupboard.count(TestEntity.class);
+		Observable<Long> checkPutObservable = rxDatabase.count(TestEntity.class);
 		checkPutObservable.subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
@@ -122,14 +121,14 @@ public class CrudTest extends InstrumentationTestCase {
 		});
 
 		// Delete as chain action
-		rxCupboard.get(TestEntity.class, testEntity._id).doOnNext(rxCupboard.delete()).count().subscribe(new Action1<Integer>() {
+		rxDatabase.get(TestEntity.class, testEntity._id).doOnNext(rxDatabase.delete()).count().subscribe(new Action1<Integer>() {
 			@Override
 			public void call(Integer count) {
 				assertEquals(1, count.intValue());
 			}
 		});
 
-		Observable<Long> checkDeleteObservable = rxCupboard.count(TestEntity.class);
+		Observable<Long> checkDeleteObservable = rxDatabase.count(TestEntity.class);
 		checkDeleteObservable.subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
@@ -151,14 +150,14 @@ public class CrudTest extends InstrumentationTestCase {
 				e.time = integer;
 				return e;
 			}
-		}).doOnNext(rxCupboard.put()).count().subscribe(new Action1<Integer>() {
+		}).doOnNext(rxDatabase.put()).count().subscribe(new Action1<Integer>() {
 			@Override
 			public void call(Integer count) {
 				assertEquals(10, count.intValue());
 			}
 		});
 
-		rxCupboard.count(TestEntity.class).subscribe(new Action1<Long>() {
+		rxDatabase.count(TestEntity.class).subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
 				assertEquals(10, count.intValue());
@@ -169,7 +168,7 @@ public class CrudTest extends InstrumentationTestCase {
 		Observable.range(1, 10).flatMap(new Func1<Integer, Observable<TestEntity>>() {
 			@Override
 			public Observable<TestEntity> call(Integer id) {
-				return rxCupboard.get(TestEntity.class, id.longValue());
+				return rxDatabase.get(TestEntity.class, id.longValue());
 			}
 		}).subscribe(new Action1<TestEntity>() {
 			@Override
@@ -185,14 +184,14 @@ public class CrudTest extends InstrumentationTestCase {
 			public Long call(Integer integer) {
 				return integer.longValue();
 			}
-		}).doOnNext(rxCupboard.delete(TestEntity.class)).count().subscribe(new Action1<Integer>() {
+		}).doOnNext(rxDatabase.delete(TestEntity.class)).count().subscribe(new Action1<Integer>() {
 			@Override
 			public void call(Integer count) {
 				assertEquals(10, count.intValue());
 			}
 		});
 
-		rxCupboard.count(TestEntity.class).subscribe(new Action1<Long>() {
+		rxDatabase.count(TestEntity.class).subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
 				assertEquals(0, count.intValue());
@@ -209,17 +208,17 @@ public class CrudTest extends InstrumentationTestCase {
 				e.time = integer;
 				return e;
 			}
-		}).subscribe(rxCupboard.put());
+		}).subscribe(rxDatabase.put());
 
 		// Now delete all 10 items by their object
 		Observable.range(1, 10).flatMap(new Func1<Integer, Observable<TestEntity>>() {
 			@Override
 			public Observable<TestEntity> call(Integer integer) {
-				return rxCupboard.get(TestEntity.class, integer.longValue());
+				return rxDatabase.get(TestEntity.class, integer.longValue());
 			}
-		}).subscribe(rxCupboard.delete());
+		}).subscribe(rxDatabase.delete());
 
-		rxCupboard.count(TestEntity.class).subscribe(new Action1<Long>() {
+		rxDatabase.count(TestEntity.class).subscribe(new Action1<Long>() {
 			@Override
 			public void call(Long count) {
 				assertEquals(0, count.intValue());

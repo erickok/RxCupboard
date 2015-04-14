@@ -5,30 +5,30 @@ import android.test.InstrumentationTestCase;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import nl.qbusict.cupboard.Cupboard;
+import nl.qbusict.cupboard.CupboardBuilder;
 import nl.qbusict.cupboard.DatabaseCompartment;
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
 
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
-
 public class QueryTest extends InstrumentationTestCase {
 
 	private static final String TEST_DATABASE = "RxCupboardTest.db";
 
-	private TestDbHelper helper;
+	private Cupboard cupboard;
 	private SQLiteDatabase db;
-	private RxCupboard rxCupboard;
+	private RxDatabase rxDatabase;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		cupboard().register(TestEntity.class);
+		cupboard = new CupboardBuilder().build();
+		cupboard.register(TestEntity.class);
 		getInstrumentation().getContext().deleteDatabase(TEST_DATABASE);
-		helper = new TestDbHelper(getInstrumentation().getContext(), TEST_DATABASE);
-		db = helper.getWritableDatabase();
-		rxCupboard = RxCupboard.with(db);
+		db = new TestDbHelper(getInstrumentation().getContext(), cupboard, TEST_DATABASE).getWritableDatabase();
+		rxDatabase = RxCupboard.with(cupboard, db);
 
 		// Insert 10 rows in the TestEntity table
 		Observable.range(1, 10).map(new Func1<Integer, TestEntity>() {
@@ -39,7 +39,7 @@ public class QueryTest extends InstrumentationTestCase {
 				testEntity.time = integer.longValue();
 				return testEntity;
 			}
-		}).subscribe(rxCupboard.put());
+		}).subscribe(rxDatabase.put());
 
 	}
 
@@ -47,7 +47,7 @@ public class QueryTest extends InstrumentationTestCase {
 
 		// Emit all 10 items from the TestEntity table
 		final AtomicInteger id = new AtomicInteger();
-		rxCupboard.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
+		rxDatabase.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				assertEquals(id.incrementAndGet(), testEntity._id.intValue());
@@ -67,7 +67,7 @@ public class QueryTest extends InstrumentationTestCase {
 
 		// Emit the 5 items from the TestEntity table with id <= 5
 		final AtomicInteger id = new AtomicInteger();
-		rxCupboard.query(TestEntity.class, "_id <= ?", Integer.toString(5)).doOnNext(new Action1<TestEntity>() {
+		rxDatabase.query(TestEntity.class, "_id <= ?", Integer.toString(5)).doOnNext(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				assertEquals(id.incrementAndGet(), testEntity._id.intValue());
@@ -88,8 +88,8 @@ public class QueryTest extends InstrumentationTestCase {
 		// Emit the 5 items from the TestEntity table with id <= 5 using the Cupboard QueryBuilder
 		final AtomicInteger id = new AtomicInteger();
 		DatabaseCompartment.QueryBuilder<TestEntity> query =
-				cupboard().withDatabase(db).query(TestEntity.class).withSelection("_id <= ?", Integer.toString(5));
-		rxCupboard.query(query).doOnNext(new Action1<TestEntity>() {
+				cupboard.withDatabase(db).query(TestEntity.class).withSelection("_id <= ?", Integer.toString(5));
+		rxDatabase.query(query).doOnNext(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				assertEquals(id.incrementAndGet(), testEntity._id.intValue());
@@ -109,7 +109,7 @@ public class QueryTest extends InstrumentationTestCase {
 
 		// Normally there are 10 items
 		final AtomicInteger allCount = new AtomicInteger();
-		rxCupboard.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
+		rxDatabase.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				allCount.incrementAndGet();
@@ -119,7 +119,7 @@ public class QueryTest extends InstrumentationTestCase {
 
 		// Ask for only 5 elements of the 10 in the table
 		final AtomicInteger pullCount = new AtomicInteger();
-		rxCupboard.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
+		rxDatabase.query(TestEntity.class).doOnNext(new Action1<TestEntity>() {
 			@Override
 			public void call(TestEntity testEntity) {
 				pullCount.incrementAndGet();

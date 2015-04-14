@@ -2,19 +2,20 @@ RxCupboard
 ============
 RxCupboard brings the excellent Android [Cupboard](https://bitbucket.org/qbusict/cupboard) library into the world of [RxJava](https://github.com/ReactiveX/RxJava). Using a small set of convenience `Observable`s, you can fluently store and retrieve streams of POJOs from your database.
 
-Usage
-------------
-Start off by creating an `RxCupboard` instance using the default cupboard() or pass a Cupboard instance to:
+Usage with database
+-------------------
+Start off by creating an `RxDatabase` instance using `withDefault(SQLiteDatabase)` or pass a Cupboard instance to:
 ```java
-RxCupboard rxCupboard = RxCupboard.with(cupboard, database);
+SQLiteDatabase db = ...
+RxDatabase rxDatabase = RxCupboard.with(cupboard, db);
 ```
 
 Querying your Cupboard-connected database results in a stream of the desired items.
 
 ```java
-rxCupboard.query(Cheese.class, "agedMonths >= ", 12).subscribe(new Action1<Cheese>() {
+rxDatabase.query(Cheese.class, "agedMonths >= ", 12).subscribe(new Action1<Cheese>() {
     @Override public void call(Cheese cheese) {
-        // Do something with item...
+        // Do something with cheese...
     }
 });
 ```
@@ -22,9 +23,9 @@ rxCupboard.query(Cheese.class, "agedMonths >= ", 12).subscribe(new Action1<Chees
 There is `query(Class<?>)` to load all objects form the table or use a simple WHERE selection with `query(Class<?>), selection, args` or construct a query using Cupboard's query builder and `query(DatabaseCompartment.QueryBuilder<T>)`. RxCupboard support reactive pull. For example, using take(5) only 5 items are actually converted from the underlying Cursor to a POJO:
 
 ```java
-rxCupboard.query(Cheese.class).take(5).subscribe(new Action1<Cheese>() {
-    @Override public void call(Cheese item) {
-        // Do something with item...
+rxDatabase.query(Cheese.class).take(5).subscribe(new Action1<Cheese>() {
+    @Override public void call(Cheese cheese) {
+        // Do something with cheese...
     }
 });
 ```
@@ -33,32 +34,57 @@ Storing and removing items in the databse is as easy as usually with Cupboard. R
 
 ```java
 Cheese saintMaure = new Cheese("Saint-Maure", 1, "Goat milk");
-rxCupboard.put(saintMaure); // Insert or update
-rxCupboard.delete(saintMaure); // Delete
+rxDatabase.put(saintMaure); // Insert or update
+rxDatabase.delete(saintMaure); // Delete
 
 Observable.just(3, 6, 12, 24).map(new Func1<Integer, Cheese>() {
     @Override public Cheese call(Integer agedMonths) {
         return new Cheese("Gouda", agedMonths, "Cow milk");
     }
-}).subscribe(rxCupboard.put());
+}).subscribe(rxDatabase.put());
 ```
 
 Finally, the connected database or a specific table can be monitored for changes using an Observable that reports inserts, updates and deletes.
 ```java
-rxCupboard.changes(Cheese.class).subscribe(new Action1<DatabaseChange<Cheese>>() {
+rxDatabase.changes(Cheese.class).subscribe(new Action1<DatabaseChange<Cheese>>() {
     @Override
     public void call(DatabaseChange<Cheese> databaseChange) {
         Cheese changedCheese = databaseChange.entity();
-        // Do something with the changed item...
+        // Do something with changedCheese...
     }
 });
 Cheese pecorino = new Cheese("Pecorino", 3, "Sheep milk");
-rxCupboard.put(pecorino); // Causes a DatabaseInsert change
+rxDatabase.put(pecorino); // Causes a DatabaseInsert change
 pecorino.agedMonths = 6;
-rxCupboard.put(pecorino); // Causes a DatabaseUpdate change
-rxCupboard.delete(pecorino); // Causes a DatabaseDelete change
+rxDatabase.put(pecorino); // Causes a DatabaseUpdate change
+rxDatabase.delete(pecorino); // Causes a DatabaseDelete change
 ```
 To ensure that changes are properly monitored and published it is necessary to only perform operations through the same `RxCupboard` instance.
+
+
+Usage with ContentProvider and Cursor
+-------------------------------------
+Cupboard also supports object persistance straight from a `Cursor` or `ContentProvider`. Cursors can only be queried.
+```java
+Cursor cursor = ...
+RxCursor rxCursor = RxCupboard.with(cursor);
+rxCursor.iterate(Cheese.class).subscribe(new Action1<TestEntity>() {
+	@Override public void call(Cheese cheese) {
+        // Do something with cheese...
+    }
+});
+```
+
+Content providers can be queried, inserted and deleted via the usual Cupboard way where the provider is assumed to act as REST.
+```java
+RxContentProvider rxContentProvider = RxCupboard.with(cupboard, getContext(),
+        ContactsContract.Contacts.CONTENT_URI);
+rxContentProvider.query(Contact.class).subscribe(new Action1<Integer>() {
+	@Override public void call(Contact contact) {
+		// Do something with contact...
+	}
+});
+```
 
 Contributing
 ------------

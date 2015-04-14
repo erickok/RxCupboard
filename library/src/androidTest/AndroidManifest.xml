@@ -1,0 +1,7 @@
+<manifest
+	package="nl.nl2312.rxcupboard"
+	xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<uses-permission android:name="android.permission.READ_CONTACTS" />
+
+</manifest>

@@ -12,6 +12,7 @@ import java.util.List;
 
 import nl.nl2312.rxcupboard.DatabaseChange;
 import nl.nl2312.rxcupboard.RxCupboard;
+import nl.nl2312.rxcupboard.RxDatabase;
 import nl.nl2312.rxcupboard.sample.CupboardDbHelper;
 import nl.nl2312.rxcupboard.sample.R;
 import nl.nl2312.rxcupboard.sample.model.Item;
@@ -49,7 +50,7 @@ public class MainActivity extends RxActivity {
 
 		// Get handle to your Cupboard database, using the default cupboard() instance
 		final SQLiteDatabase db = CupboardDbHelper.getConnection(this);
-		final RxCupboard rxCupboard = RxCupboard.with(db);
+		final RxDatabase rxCupboard = RxCupboard.withDefault(db);
 
 		// Load all existing items form the database into the list view
 		final ItemsAdapter adapter = new ItemsAdapter(this);
