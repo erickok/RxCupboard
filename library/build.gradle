@@ -16,3 +16,5 @@ dependencies {
     compile 'io.reactivex:rxandroid:0.24.0'
     compile 'nl.qbusict:cupboard:2.1.1'
 }
+
+apply from: '../maven_push.gradle'
