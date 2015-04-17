@@ -11,6 +11,7 @@ import android.widget.Toast;
 import java.util.List;
 
 import nl.nl2312.rxcupboard.DatabaseChange;
+import nl.nl2312.rxcupboard.OnDatabaseChange;
 import nl.nl2312.rxcupboard.RxCupboard;
 import nl.nl2312.rxcupboard.RxDatabase;
 import nl.nl2312.rxcupboard.sample.CupboardDbHelper;
@@ -64,14 +65,15 @@ public class MainActivity extends RxActivity {
 		}, toastErrorAction);
 
 		// Add/remove items to/from the list view on any changes in the Item database table
-		rxBind(rxCupboard.changes(Item.class)).subscribe(new Action1<DatabaseChange<Item>>() {
+		rxBind(rxCupboard.changes(Item.class)).subscribe(new OnDatabaseChange<Item>() {
 			@Override
-			public void call(DatabaseChange<Item> databaseChange) {
-				if (databaseChange instanceof DatabaseChange.DatabaseInsert) {
-					adapter.add(databaseChange.entity());
-				} else if (databaseChange instanceof DatabaseChange.DatabaseDelete) {
-					adapter.remove(databaseChange.entity());
-				}
+			public void onInsert(Item entity) {
+			    	adapter.add(entity);
+			}
+
+			@Override
+			public void onDelete(Item entity) {
+			    	adapter.remove(entity);
 			}
 		}, toastErrorAction);
 
