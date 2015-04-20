@@ -226,6 +226,65 @@ public class ChangesTest extends InstrumentationTestCase {
 
 	}
 
+	public void testOnDatabaseChangeAction() {
+
+		// Observe all database changes using the OnDatabaseChange default action
+		final AtomicInteger insertCount = new AtomicInteger();
+		final AtomicInteger updateCount = new AtomicInteger();
+		final AtomicInteger deleteCount = new AtomicInteger();
+		Subscription changes = rxDatabase.changes(TestEntity.class).subscribe(new OnDatabaseChange<TestEntity>() {
+			@Override
+			public void onInsert(TestEntity entity) {
+				insertCount.getAndIncrement();
+			}
+
+			@Override
+			public void onUpdate(TestEntity entity) {
+				updateCount.getAndIncrement();
+			}
+
+			@Override
+			public void onDelete(TestEntity entity) {
+				deleteCount.getAndIncrement();
+			}
+		});
+
+		long time = System.currentTimeMillis();
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Test";
+		testEntity.time = time;
+
+		// Simple insert
+		rxDatabase.put(testEntity);
+		assertEquals(1, insertCount.get());
+		assertEquals(0, updateCount.get());
+		assertEquals(0, deleteCount.get());
+
+		// Simple update
+		long updatedTime = System.currentTimeMillis();
+		testEntity.string = "Updated";
+		testEntity.time = updatedTime;
+		rxDatabase.put(testEntity);
+		assertEquals(1, insertCount.get());
+		assertEquals(1, updateCount.get());
+		assertEquals(0, deleteCount.get());
+
+		// Simple delete
+		rxDatabase.delete(testEntity);
+		assertEquals(1, insertCount.get());
+		assertEquals(1, updateCount.get());
+		assertEquals(1, deleteCount.get());
+
+		// Non-existing delete call causes no changes
+		rxDatabase.delete(testEntity);
+		assertEquals(1, insertCount.get());
+		assertEquals(1, updateCount.get());
+		assertEquals(1, deleteCount.get());
+
+		changes.unsubscribe();
+
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
