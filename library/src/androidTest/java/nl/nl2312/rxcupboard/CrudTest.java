@@ -94,6 +94,26 @@ public class CrudTest extends InstrumentationTestCase {
 
 	}
 
+	public void testPutUpdateIds() {
+
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Test";
+		testEntity.time = System.currentTimeMillis();
+
+		// Empty id should create (and return) the db-assigned one
+		assertNull(testEntity._id);
+		long assigned = rxDatabase.put(testEntity);
+		assertNotNull(testEntity._id);
+		assertEquals((long)testEntity._id, assigned);
+
+		// Updates to the id should be returned
+		testEntity._id = 123456L;
+		long updated = rxDatabase.put(testEntity);
+		assertEquals((long)testEntity._id, 123456L);
+		assertEquals(updated, 123456L);
+
+	}
+
 	public void testActionPutDelete() {
 
 		final long time = System.currentTimeMillis();

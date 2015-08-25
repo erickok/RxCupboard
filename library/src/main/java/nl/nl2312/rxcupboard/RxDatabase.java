@@ -46,14 +46,16 @@ public class RxDatabase {
 	}
 
 	@SuppressWarnings("unchecked") // Cupboard EntityConverter type is lost as it only accepts Class<?>
-	public <T> void put(T entity) {
+	public <T> long put(T entity) {
 		EntityConverter<T> entityConverter = cupboard.getEntityConverter((Class<T>) entity.getClass());
 		Long existing = entityConverter.getId(entity);
-		dc.put(entity);
+		long inserted = dc.put(entity);
 		if (existing == null) {
 			triggers.onNext(DatabaseChange.insert(entity));
+			return inserted;
 		} else {
 			triggers.onNext(DatabaseChange.update(entity));
+			return existing;
 		}
 	}
 
