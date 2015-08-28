@@ -6,6 +6,7 @@ import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.DatabaseCompartment;
 import nl.qbusict.cupboard.convert.EntityConverter;
 import rx.Observable;
+import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -68,6 +69,29 @@ public class RxDatabase {
 		};
 	}
 
+    /**
+     * Wrapper for {@link RxDatabase#put(Object)}
+     *
+     * @param entity to store
+     * @return {@link Observable<Long>} containing stored item id
+     *
+     * In case of exception, {@link Subscriber#onError(Throwable)} will be fired
+     */
+    public <T> Observable<Long> putRx(final T entity) {
+        return Observable.create(new Observable.OnSubscribe<Long>() {
+            @Override
+            public void call(Subscriber<? super Long> subscriber) {
+                try {
+                    long id = put(entity);
+                    subscriber.onNext(id);
+                    subscriber.onCompleted();
+                } catch (Exception e) {
+                    subscriber.onError(e);
+                }
+            }
+        });
+    }
+    
 	public <T> boolean delete(T entity) {
 		boolean result = dc.delete(entity);
 		if (result) {
