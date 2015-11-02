@@ -10,7 +10,6 @@ import android.widget.Toast;
 
 import java.util.List;
 
-import nl.nl2312.rxcupboard.DatabaseChange;
 import nl.nl2312.rxcupboard.OnDatabaseChange;
 import nl.nl2312.rxcupboard.RxCupboard;
 import nl.nl2312.rxcupboard.RxDatabase;
@@ -68,12 +67,12 @@ public class MainActivity extends RxActivity {
 		rxBind(rxCupboard.changes(Item.class)).subscribe(new OnDatabaseChange<Item>() {
 			@Override
 			public void onInsert(Item entity) {
-			    	adapter.add(entity);
+				adapter.add(entity);
 			}
 
 			@Override
 			public void onDelete(Item entity) {
-			    	adapter.remove(entity);
+				adapter.remove(entity);
 			}
 		}, toastErrorAction);
 
@@ -117,7 +116,6 @@ public class MainActivity extends RxActivity {
 				addEdit.setText(null);
 			}
 		}).subscribe(rxCupboard.put(), toastErrorAction);
-
 	}
 
 	private Action1<Throwable> toastErrorAction = new Action1<Throwable>() {

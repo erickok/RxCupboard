@@ -114,6 +114,57 @@ public class CrudTest extends InstrumentationTestCase {
 
 	}
 
+	public void testObservablePutDelete() {
+
+		final long time = System.currentTimeMillis();
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Action";
+		testEntity.time = time;
+
+		// Observe put and use the object
+		assertNull(testEntity._id);
+		rxDatabase.putRx(testEntity).subscribe(new Action1<TestEntity>() {
+			@Override
+			public void call(TestEntity testEntity) {
+				assertNotNull(testEntity._id);
+				assertEquals("Action", testEntity.string);
+				assertEquals(time, testEntity.time);
+			}
+		});
+
+		Observable<Long> checkPutObservable = rxDatabase.count(TestEntity.class);
+		checkPutObservable.subscribe(new Action1<Long>() {
+			@Override
+			public void call(Long count) {
+				assertEquals(1, count.intValue());
+			}
+		});
+
+		// Observe deleted object
+		rxDatabase.deleteRx(testEntity).doOnNext(new Action1<TestEntity>() {
+			@Override
+			public void call(TestEntity testEntity) {
+				assertNotNull(testEntity._id);
+				assertEquals("Action", testEntity.string);
+				assertEquals(time, testEntity.time);
+			}
+		}).count().subscribe(new Action1<Integer>() {
+			@Override
+			public void call(Integer count) {
+				assertEquals(1, count.intValue());
+			}
+		});
+
+		Observable<Long> checkDeleteObservable = rxDatabase.count(TestEntity.class);
+		checkDeleteObservable.subscribe(new Action1<Long>() {
+			@Override
+			public void call(Long count) {
+				assertEquals(0, count.intValue());
+			}
+		});
+
+	}
+
 	public void testActionPutDelete() {
 
 		final long time = System.currentTimeMillis();

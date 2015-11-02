@@ -59,6 +59,16 @@ public class RxDatabase {
 		}
 	}
 
+	public <T> Observable<T> putRx(final T entity) {
+		return Observable.defer(new Func0<Observable<T>>() {
+			@Override
+			public Observable<T> call() {
+				put(entity);
+				return Observable.just(entity);
+			}
+		});
+	}
+
 	public <T> Action1<T> put() {
 		return new Action1<T>() {
 			@Override
@@ -74,6 +84,16 @@ public class RxDatabase {
 			triggers.onNext(DatabaseChange.delete(entity));
 		}
 		return result;
+	}
+
+	public <T> Observable<T> deleteRx(final T entity) {
+		return Observable.defer(new Func0<Observable<T>>() {
+			@Override
+			public Observable<T> call() {
+				delete(entity);
+				return Observable.just(entity);
+			}
+		});
 	}
 
 	public <T> boolean delete(Class<T> entityClass, long id) {
