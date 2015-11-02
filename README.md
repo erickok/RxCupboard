@@ -4,7 +4,7 @@ RxCupboard brings the excellent Android [Cupboard](https://bitbucket.org/qbusict
 
 A sample project is included which shows how RxCupboard gracefully fits in an all-reactive Android app. The [.apk is available]() as direct download. Import the library from Maven Central using Gradle:
 ```groovy
-compile 'nl.2312:rxcupboard:0.2'
+compile 'nl.2312:rxcupboard:0.5'
 ```
 
 Usage with database
