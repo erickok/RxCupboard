@@ -1,20 +1,20 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
 
     defaultConfig {
         applicationId "nl.nl2312.rxcupboard"
         minSdkVersion 15
-        targetSdkVersion 22
-        versionCode 4
-        versionName "0.4"
+        targetSdkVersion 23
+        versionCode 5
+        versionName "0.5"
     }
 }
 
 dependencies {
     compile project(':library')
-    compile 'io.reactivex:rxandroid:0.24.0'
-    compile 'io.reactivex:rxandroid-framework:0.24.0'
+    compile 'io.reactivex:rxandroid:1.0.1'
+    compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
 }
