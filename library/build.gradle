@@ -7,14 +7,14 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 23
-        versionCode 5
-        versionName "0.5"
+        versionCode 6
+        versionName "0.6"
     }
 }
 
 dependencies {
-    compile 'io.reactivex:rxjava:1.0.14'
-    compile 'nl.qbusict:cupboard:2.1.2'
+    compile 'io.reactivex:rxjava:1.0.15'
+    compile 'nl.qbusict:cupboard:2.1.4'
 }
 
 apply from: '../maven_push.gradle'
