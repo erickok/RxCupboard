@@ -151,6 +151,10 @@ public class RxDatabase {
 		return Observable.from(preparedQuery.query());
 	}
 
+	public <T> DatabaseCompartment.QueryBuilder<T> buildQuery(Class<T> entityClass) {
+		return dc.query(entityClass);
+	}
+
 	public <T> Observable<Long> count(final Class<T> entityClass) {
 		return Observable.defer(new Func0<Observable<Long>>() {
 			@Override

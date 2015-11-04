@@ -25,12 +25,20 @@ rxDatabase.query(Cheese.class, "agedMonths >= ", 12).subscribe(new Action1<Chees
 });
 ```
 
-There is `query(Class<?>)` to load all objects form the table or use a simple WHERE selection with `query(Class<?>), selection, args` or construct a query using Cupboard's query builder and `query(DatabaseCompartment.QueryBuilder<T>)`. RxCupboard support reactive pull. For example, using take(5) only 5 items are actually converted from the underlying Cursor to a POJO:
+There is `query(Class<?>)` to load all objects form the table or use a simple WHERE selection with `query(Class<?>), selection, args`. RxCupboard support reactive pull. For example, using take(5) only 5 items are actually converted from the underlying Cursor to a POJO:
 
 ```java
 rxDatabase.query(Cheese.class).take(5).subscribe(new Action1<Cheese>() {
     @Override public void call(Cheese cheese) {
         // Do something with cheese...
+    }
+});
+
+For more complex queries, use `buildQuery(Class<?>)` to use Cupboard's query builder and then call `query(DatabaseCompartment.QueryBuilder<T>)`:
+
+rxDatabase.query(rxDatabase.buildQuery(Cheese.class).withSelection("agedMonths >= 12").orderBy("name")).toList().subscribe(new Action1<Cheese>() {
+    @Override public void call(List<Cheese> cheeses) {
+        // Do something with this ordered list of aged cheeses...
     }
 });
 ```

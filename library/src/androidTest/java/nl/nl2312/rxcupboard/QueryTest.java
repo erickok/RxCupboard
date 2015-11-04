@@ -7,7 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
-import nl.qbusict.cupboard.DatabaseCompartment;
 import rx.Observable;
 import rx.functions.Action1;
 import rx.functions.Func1;
@@ -87,16 +86,15 @@ public class QueryTest extends InstrumentationTestCase {
 
 		// Emit the 5 items from the TestEntity table with id <= 5 using the Cupboard QueryBuilder
 		final AtomicInteger id = new AtomicInteger();
-		DatabaseCompartment.QueryBuilder<TestEntity> query =
-				cupboard.withDatabase(db).query(TestEntity.class).withSelection("_id <= ?", Integer.toString(5));
-		rxDatabase.query(query).doOnNext(new Action1<TestEntity>() {
-			@Override
-			public void call(TestEntity testEntity) {
-				assertEquals(id.incrementAndGet(), testEntity._id.intValue());
-				assertEquals(id.get(), testEntity.time);
-				assertEquals("Test", testEntity.string);
-			}
-		}).count().subscribe(new Action1<Integer>() {
+		rxDatabase.query(rxDatabase.buildQuery(TestEntity.class).withSelection("_id <= ?", Integer.toString(5)))
+				.doOnNext(new Action1<TestEntity>() {
+					@Override
+					public void call(TestEntity testEntity) {
+						assertEquals(id.incrementAndGet(), testEntity._id.intValue());
+						assertEquals(id.get(), testEntity.time);
+						assertEquals("Test", testEntity.string);
+					}
+				}).count().subscribe(new Action1<Integer>() {
 			@Override
 			public void call(Integer count) {
 				assertEquals(5, count.intValue());
