@@ -4,8 +4,10 @@ import android.database.sqlite.SQLiteDatabase;
 
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.DatabaseCompartment;
+import nl.qbusict.cupboard.QueryResultIterable;
 import nl.qbusict.cupboard.convert.EntityConverter;
 import rx.Observable;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -140,15 +142,24 @@ public class RxDatabase {
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass) {
-		return Observable.from(dc.query(entityClass).query());
+		return createObservable(dc.query(entityClass).query());
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass, String selection, String... args) {
-		return Observable.from(dc.query(entityClass).withSelection(selection, args).query());
+		return createObservable(dc.query(entityClass).withSelection(selection, args).query());
 	}
 
 	public <T> Observable<T> query(DatabaseCompartment.QueryBuilder<T> preparedQuery) {
-		return Observable.from(preparedQuery.query());
+		return createObservable(preparedQuery.query());
+	}
+
+	private <T> Observable<T> createObservable(final QueryResultIterable<T> iterable) {
+		return Observable.from(iterable).doOnTerminate(new Action0() {
+			@Override
+			public void call() {
+				iterable.close();
+			}
+		});
 	}
 
 	public <T> DatabaseCompartment.QueryBuilder<T> buildQuery(Class<T> entityClass) {
