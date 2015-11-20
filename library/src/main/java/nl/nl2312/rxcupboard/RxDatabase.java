@@ -142,24 +142,32 @@ public class RxDatabase {
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass) {
-		return createAutoCloseObservable(dc.query(entityClass).query());
+		QueryResultIterable<T> iterable = dc.query(entityClass).query();
+		return Observable.from(iterable).compose(autoClose(iterable));
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass, String selection, String... args) {
-		return createAutoCloseObservable(dc.query(entityClass).withSelection(selection, args).query());
+		QueryResultIterable<T> iterable = dc.query(entityClass).withSelection(selection, args).query();
+		return Observable.from(iterable).compose(autoClose(iterable));
 	}
 
 	public <T> Observable<T> query(DatabaseCompartment.QueryBuilder<T> preparedQuery) {
-		return createAutoCloseObservable(preparedQuery.query());
+		QueryResultIterable<T> iterable = preparedQuery.query();
+		return Observable.from(iterable).compose(autoClose(iterable));
 	}
 
-	private <T> Observable<T> createAutoCloseObservable(final QueryResultIterable<T> iterable) {
-		return Observable.from(iterable).doOnTerminate(new Action0() {
+	private <T> Observable.Transformer<? super T, ? extends T> autoClose(final QueryResultIterable<T> iterable) {
+		return new Observable.Transformer<T, T>() {
 			@Override
-			public void call() {
-				iterable.close();
+			public Observable<T> call(Observable<T> tObservable) {
+				return tObservable.doOnTerminate(new Action0() {
+					@Override
+					public void call() {
+						iterable.close();
+					}
+				});
 			}
-		});
+		};
 	}
 
 	public <T> DatabaseCompartment.QueryBuilder<T> buildQuery(Class<T> entityClass) {

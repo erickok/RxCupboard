@@ -7,13 +7,13 @@ android {
     defaultConfig {
         minSdkVersion 7
         targetSdkVersion 23
-        versionCode 6
-        versionName "0.6"
+        versionCode 7
+        versionName "0.7"
     }
 }
 
 dependencies {
-    compile 'io.reactivex:rxjava:1.0.15'
+    compile 'io.reactivex:rxjava:1.0.16'
     compile 'nl.qbusict:cupboard:2.1.4'
 }
 
