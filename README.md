@@ -1,6 +1,6 @@
 RxCupboard
 ============
-RxCupboard brings the excellent Android [Cupboard](https://bitbucket.org/qbusict/cupboard) library into the world of [RxJava](https://github.com/ReactiveX/RxJava). Using a small set of convenience `Observable`s, you can fluently store and retrieve streams of POJOs from your database.
+RxCupboard brings the excellent Android [Cupboard](https://bitbucket.org/littlerobots/cupboard) library into the world of [RxJava](https://github.com/ReactiveX/RxJava). Using a small set of convenience `Observable`s, you can fluently store and retrieve streams of POJOs from your database.
 
 A sample project is included which shows how RxCupboard gracefully fits in an all-reactive Android app. The [.apk is available]() as direct download. Import the library from Maven Central using Gradle:
 ```groovy
