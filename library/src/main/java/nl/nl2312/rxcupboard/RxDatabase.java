@@ -163,6 +163,13 @@ public class RxDatabase {
 				return tObservable.doOnTerminate(new Action0() {
 					@Override
 					public void call() {
+						// Stream terminates (completed or on error): close the cursor
+						iterable.close();
+					}
+				}).doOnUnsubscribe(new Action0() {
+					@Override
+					public void call() {
+						// Unsubscribed (manually or by some operator such as take()): close the cursor
 						iterable.close();
 					}
 				});
