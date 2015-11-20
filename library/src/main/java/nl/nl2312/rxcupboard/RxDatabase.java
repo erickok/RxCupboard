@@ -142,18 +142,18 @@ public class RxDatabase {
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass) {
-		return createObservable(dc.query(entityClass).query());
+		return createAutoCloseObservable(dc.query(entityClass).query());
 	}
 
 	public <T> Observable<T> query(Class<T> entityClass, String selection, String... args) {
-		return createObservable(dc.query(entityClass).withSelection(selection, args).query());
+		return createAutoCloseObservable(dc.query(entityClass).withSelection(selection, args).query());
 	}
 
 	public <T> Observable<T> query(DatabaseCompartment.QueryBuilder<T> preparedQuery) {
-		return createObservable(preparedQuery.query());
+		return createAutoCloseObservable(preparedQuery.query());
 	}
 
-	private <T> Observable<T> createObservable(final QueryResultIterable<T> iterable) {
+	private <T> Observable<T> createAutoCloseObservable(final QueryResultIterable<T> iterable) {
 		return Observable.from(iterable).doOnTerminate(new Action0() {
 			@Override
 			public void call() {
