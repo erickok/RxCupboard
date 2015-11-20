@@ -1,6 +1,8 @@
 package nl.nl2312.rxcupboard;
 
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
+import android.os.StrictMode;
 import android.test.InstrumentationTestCase;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +30,11 @@ public class QueryTest extends InstrumentationTestCase {
 		getInstrumentation().getContext().deleteDatabase(TEST_DATABASE);
 		db = new TestDbHelper(getInstrumentation().getContext(), cupboard, TEST_DATABASE).getWritableDatabase();
 		rxDatabase = RxCupboard.with(cupboard, db);
+
+		// Enable strict mode to test if the underlying database cursors are correctly closed
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().penaltyLog().penaltyDeath().build());
+		}
 
 		// Insert 10 rows in the TestEntity table
 		Observable.range(1, 10).map(new Func1<Integer, TestEntity>() {
