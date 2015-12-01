@@ -4,7 +4,7 @@ RxCupboard brings the excellent Android [Cupboard](https://bitbucket.org/littler
 
 A sample project is included which shows how RxCupboard gracefully fits in an all-reactive Android app. The [.apk is available]() as direct download. Import the library from Maven Central using Gradle:
 ```groovy
-compile 'nl.2312:rxcupboard:0.5'
+compile 'nl.2312:rxcupboard:0.7'
 ```
 
 Usage with database
@@ -18,7 +18,7 @@ RxDatabase rxDatabase = RxCupboard.with(cupboard, db);
 Querying your Cupboard-connected database results in a stream of the desired items.
 
 ```java
-rxDatabase.query(Cheese.class, "agedMonths >= ", 12).subscribe(new Action1<Cheese>() {
+rxDatabase.query(Cheese.class, "agedMonths >= ?", 12).subscribe(new Action1<Cheese>() {
     @Override public void call(Cheese cheese) {
         // Do something with cheese...
     }
@@ -33,9 +33,11 @@ rxDatabase.query(Cheese.class).take(5).subscribe(new Action1<Cheese>() {
         // Do something with cheese...
     }
 });
+```
 
 For more complex queries, use `buildQuery(Class<?>)` to use Cupboard's query builder and then call `query(DatabaseCompartment.QueryBuilder<T>)`:
 
+```java
 rxDatabase.query(rxDatabase.buildQuery(Cheese.class).withSelection("agedMonths >= 12").orderBy("name")).toList().subscribe(new Action1<Cheese>() {
     @Override public void call(List<Cheese> cheeses) {
         // Do something with this ordered list of aged cheeses...
@@ -43,7 +45,7 @@ rxDatabase.query(rxDatabase.buildQuery(Cheese.class).withSelection("agedMonths >
 });
 ```
 
-Storing and removing items in the databse is as easy as usually with Cupboard. RxCupboard support the direct operations and has helper action implementations to use in streams.
+Storing and removing items in the databse is as easy as usually with Cupboard. RxCupboard supports these direct operations and has helper action implementations to use in streams.
 
 ```java
 Cheese saintMaure = new Cheese("Saint-Maure", 1, "Goat milk");
