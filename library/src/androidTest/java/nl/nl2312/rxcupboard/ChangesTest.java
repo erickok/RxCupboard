@@ -1,56 +1,36 @@
 package nl.nl2312.rxcupboard;
 
 import android.database.sqlite.SQLiteDatabase;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
-import rx.Observable;
-import rx.Subscription;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.subscriptions.CompositeSubscription;
 
-public class ChangesTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ChangesTest {
 
 	private static final String TEST_DATABASE = "RxCupboardTest.db";
 
 	private SQLiteDatabase db;
 	private RxDatabase rxDatabase;
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-
+	@Before
+	public void setUp() throws Exception {
 		Cupboard cupboard = new CupboardBuilder().build();
 		cupboard.register(TestEntity.class);
 		cupboard.register(TestEntity2.class);
-		getInstrumentation().getContext().deleteDatabase(TEST_DATABASE);
-		db = new TestDbHelper(getInstrumentation().getContext(), cupboard, TEST_DATABASE).getWritableDatabase();
+		InstrumentationRegistry.getTargetContext().deleteDatabase(TEST_DATABASE);
+		db = new TestDbHelper(InstrumentationRegistry.getTargetContext(), cupboard, TEST_DATABASE).getWritableDatabase();
 		rxDatabase = RxCupboard.with(cupboard, db);
 	}
 
+	/*@Test
 	public void testAllAndSpecificChanges() {
-
-		// Add observable to all database changes and one for only changes in TestEntity2
-		final AtomicInteger changeAllCount = new AtomicInteger();
-		final AtomicInteger changeSpecificCount = new AtomicInteger();
-		Subscription allChanges = rxDatabase.changes().subscribe(new Action1<DatabaseChange>() {
-			@Override
-			public void call(DatabaseChange databaseChange) {
-				changeAllCount.getAndIncrement();
-			}
-		});
-		Subscription specificChanges = rxDatabase.changes(TestEntity2.class).subscribe(new Action1<DatabaseChange>() {
-			@Override
-			public void call(DatabaseChange databaseChange) {
-				assertTrue(databaseChange.entity() instanceof TestEntity2);
-				changeSpecificCount.getAndIncrement();
-			}
-		});
 
 		long time = System.currentTimeMillis();
 		final TestEntity testEntity = new TestEntity();
@@ -283,12 +263,10 @@ public class ChangesTest extends InstrumentationTestCase {
 
 		changes.unsubscribe();
 
-	}
+	}*/
 
-	@Override
-	protected void tearDown() throws Exception {
-		super.tearDown();
-
+	@After
+	public void tearDown() throws Exception {
 		db.close();
 	}
 

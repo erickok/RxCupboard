@@ -1,8 +1,8 @@
 package nl.nl2312.rxcupboard;
 
-import rx.functions.Action1;
+import io.reactivex.functions.Consumer;
 
-public abstract class OnDatabaseChange<T> implements Action1<DatabaseChange<T>> {
+public abstract class OnDatabaseChange<T> implements Consumer<DatabaseChange<T>> {
 
     public void onUpdate(T entity) {}
 
@@ -11,7 +11,7 @@ public abstract class OnDatabaseChange<T> implements Action1<DatabaseChange<T>> 
     public void onDelete(T entity) {}
 
     @Override
-    public void call(DatabaseChange<T> databaseChange) {
+    public void accept(DatabaseChange<T> databaseChange) throws Exception {
         if (databaseChange instanceof DatabaseChange.DatabaseUpdate) {
             onUpdate(databaseChange.entity());
         } else if (databaseChange instanceof DatabaseChange.DatabaseInsert) {
@@ -20,4 +20,5 @@ public abstract class OnDatabaseChange<T> implements Action1<DatabaseChange<T>> 
             onDelete(databaseChange.entity());
         }
     }
+
 }

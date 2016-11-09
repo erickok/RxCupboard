@@ -1,42 +1,45 @@
 package nl.nl2312.rxcupboard;
 
 import android.provider.ContactsContract;
-import android.test.InstrumentationTestCase;
-import android.util.Log;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import io.reactivex.functions.Predicate;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
-import rx.functions.Action1;
 
-public class ContentProviderTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class ContentProviderTest {
 
 	private Cupboard cupboard;
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-
+	@Before
+	public void setUp() throws Exception {
 		cupboard = new CupboardBuilder().useAnnotations().build();
 		cupboard.register(Contact.class);
-
 	}
 
-	public void testCursor() {
+	@Test
+	public void contentProvider_query() throws InterruptedException {
 
-		RxContentProvider rxContentProvider = RxCupboard.with(cupboard, getInstrumentation().getContext(), ContactsContract.Contacts.CONTENT_URI);
+		RxContentProvider rxContentProvider = RxCupboard.with(cupboard, InstrumentationRegistry.getTargetContext(),
+				ContactsContract.Contacts.CONTENT_URI);
 
 		// Should emit some items
-		rxContentProvider.query(Contact.class).doOnNext(new Action1<Contact>() {
-			@Override
-			public void call(Contact contact) {
-				Log.println(Log.ASSERT, "ContentProviderTest", contact.display_name);
-			}
-		}).count().subscribe(new Action1<Integer>() {
-			@Override
-			public void call(Integer count) {
-				assertTrue(count > 0);
-			}
-		});
+		rxContentProvider.query(Contact.class)
+				.count()
+				.test()
+				.assertTerminated()
+				.assertValue(new Predicate<Long>() {
+					@Override
+					public boolean test(Long count) throws Exception {
+						return count >= 0;
+					}
+				});
 
 	}
 

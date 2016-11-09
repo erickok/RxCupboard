@@ -2,9 +2,9 @@ package nl.nl2312.rxcupboard;
 
 import android.database.Cursor;
 
+import io.reactivex.Flowable;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CursorCompartment;
-import rx.Observable;
 
 public class RxCursor {
 
@@ -14,8 +14,8 @@ public class RxCursor {
 		this.cursor = cupboard.withCursor(cursor);
 	}
 
-	public <T> Observable<T> iterate(Class<T> entityClass) {
-		return Observable.from(cursor.iterate(entityClass));
+	public <T> Flowable<T> iterate(Class<T> entityClass) {
+		return Flowable.fromIterable(cursor.iterate(entityClass));
 	}
 
 }

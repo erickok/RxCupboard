@@ -5,16 +5,19 @@ android {
     buildToolsVersion "25.0.0"
 
     defaultConfig {
-        minSdkVersion 7
+        minSdkVersion 8
         targetSdkVersion 25
-        versionCode 7
-        versionName "0.7"
+        versionCode 20
+        versionName "2.0-dev"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 }
 
 dependencies {
-    compile 'io.reactivex:rxjava:1.0.16'
+    compile 'io.reactivex.rxjava2:rxjava:2.0.0'
     compile 'nl.qbusict:cupboard:2.1.4'
+
+    androidTestCompile 'com.android.support.test:runner:0.5'
 }
 
 apply from: '../maven_push.gradle'

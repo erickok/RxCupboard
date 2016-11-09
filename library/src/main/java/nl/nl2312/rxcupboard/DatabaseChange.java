@@ -2,19 +2,19 @@ package nl.nl2312.rxcupboard;
 
 public abstract class DatabaseChange<T> {
 
-	public static <T> DatabaseInsert<T> insert(T entity) {
+	public static <T> DatabaseInsert<T> insert(final T entity) {
 		DatabaseInsert<T> insert = new DatabaseInsert<>();
 		insert.entity = entity;
 		return insert;
 	}
 
-	public static <T> DatabaseUpdate<T> update(T entity) {
+	public static <T> DatabaseUpdate<T> update(final T entity) {
 		DatabaseUpdate<T> update = new DatabaseUpdate<>();
 		update.entity = entity;
 		return update;
 	}
 
-	public static <T> DatabaseDelete<T> delete(T entity) {
+	public static <T> DatabaseDelete<T> delete(final T entity) {
 		DatabaseDelete<T> delete = new DatabaseDelete<>();
 		delete.entity = entity;
 		return delete;

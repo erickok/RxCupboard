@@ -6,11 +6,11 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import nl.qbusict.cupboard.Cupboard;
 
-public class TestDbHelper extends SQLiteOpenHelper {
+class TestDbHelper extends SQLiteOpenHelper {
 
 	private final Cupboard cupboard;
 
-	public TestDbHelper(Context context, Cupboard cupboard, String name) {
+	TestDbHelper(Context context, Cupboard cupboard, String name) {
 		super(context, name, null, 1);
 		this.cupboard = cupboard;
 	}
