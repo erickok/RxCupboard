@@ -13,10 +13,13 @@ import org.junit.runner.RunWith;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
+
+import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class QueryTest {
@@ -53,6 +56,7 @@ public class QueryTest {
 						return testEntity;
 					}
 				})
+				.doOnNext(rxDatabase.<TestEntity>put())
 				.test();
 
 		accumulator = new BiFunction<Integer, TestEntity, Integer>() {
@@ -68,16 +72,16 @@ public class QueryTest {
 
 		// Emit all 10 items from the TestEntity table
 		rxDatabase.query(TestEntity.class)
-				.test()
-				.assertValueCount(10)
-				.assertValue(new Predicate<TestEntity>() {
+				.doOnNext(new Consumer<TestEntity>() {
 					@Override
-					public boolean test(TestEntity testEntity) throws Exception {
-						return testEntity._id != null &&
-								testEntity.string.equals("Test") &&
-								testEntity.time == testEntity._id;
+					public void accept(TestEntity testEntity) throws Exception {
+						assertTrue(testEntity._id != null);
+						assertTrue(testEntity.string.equals("Test"));
+						assertTrue(testEntity.time == testEntity._id);
 					}
-				});
+				})
+				.test()
+				.assertValueCount(10);
 
 	}
 
@@ -85,16 +89,23 @@ public class QueryTest {
 	public void testQuerySelection() {
 
 		// Emit the 5 items from the TestEntity table with id < 5
-		rxDatabase.query(TestEntity.class, "_id < ?", Integer.toString(5))
+		rxDatabase.query(TestEntity.class, "_id <= ?", Integer.toString(5))
 				.test()
 				.assertValueCount(5)
-				.assertValue(new Predicate<TestEntity>() {
+				.assertValueAt(0, new Predicate<TestEntity>() {
 					@Override
 					public boolean test(TestEntity testEntity) throws Exception {
-						return testEntity._id != null &&
-								testEntity._id < 5 &&
+						return testEntity._id == 1 &&
 								testEntity.string.equals("Test") &&
-								testEntity.time == testEntity._id;
+								testEntity.time == 1;
+					}
+				})
+				.assertValueAt(4, new Predicate<TestEntity>() {
+					@Override
+					public boolean test(TestEntity testEntity) throws Exception {
+						return testEntity._id == 5 &&
+								testEntity.string.equals("Test") &&
+								testEntity.time == 5;
 					}
 				});
 
@@ -104,16 +115,23 @@ public class QueryTest {
 	public void testQueryBuilder() {
 
 		// Emit the 5 items from the TestEntity table with id < 5 using the Cupboard QueryBuilder
-		rxDatabase.query(rxDatabase.buildQuery(TestEntity.class).withSelection("_id < ?", Integer.toString(5)))
+		rxDatabase.query(rxDatabase.buildQuery(TestEntity.class).withSelection("_id <= ?", Integer.toString(5)))
 				.test()
 				.assertValueCount(5)
-				.assertValue(new Predicate<TestEntity>() {
+				.assertValueAt(0, new Predicate<TestEntity>() {
 					@Override
 					public boolean test(TestEntity testEntity) throws Exception {
-						return testEntity._id != null &&
-								testEntity._id < 5 &&
+						return testEntity._id == 1 &&
 								testEntity.string.equals("Test") &&
-								testEntity.time == testEntity._id;
+								testEntity.time == 1;
+					}
+				})
+				.assertValueAt(4, new Predicate<TestEntity>() {
+					@Override
+					public boolean test(TestEntity testEntity) throws Exception {
+						return testEntity._id == 5 &&
+								testEntity.string.equals("Test") &&
+								testEntity.time == 5;
 					}
 				});
 
@@ -126,14 +144,14 @@ public class QueryTest {
 		rxDatabase.query(TestEntity.class)
 				.scan(0, accumulator)
 				.test()
-				.assertValueCount(10);
+				.assertValues(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
 		// Ask for only 5 elements of the 10 in the table
 		rxDatabase.query(TestEntity.class)
-				.scan(0, accumulator)
 				.take(5)
+				.scan(0, accumulator)
 				.test()
-				.assertValues(1, 2, 3, 4, 5);
+				.assertValues(0, 1, 2, 3, 4, 5);
 
 	}
 

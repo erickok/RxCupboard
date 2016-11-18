@@ -14,11 +14,13 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.SingleSource;
 import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
 
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -31,8 +33,6 @@ public class CrudTest {
 
 	private SQLiteDatabase db;
 	private RxDatabase rxDatabase;
-	private long singleTime;
-	private Predicate<TestEntity> isDefaultTestEntity;
 
 	@Before
 	public void setUp() throws Exception {
@@ -41,24 +41,15 @@ public class CrudTest {
 		InstrumentationRegistry.getTargetContext().deleteDatabase(TEST_DATABASE);
 		db = new TestDbHelper(InstrumentationRegistry.getTargetContext(), cupboard, TEST_DATABASE).getWritableDatabase();
 		rxDatabase = RxCupboard.with(cupboard, db);
-
-		singleTime = System.currentTimeMillis();
-		isDefaultTestEntity = new Predicate<TestEntity>() {
-			@Override
-			public boolean test(TestEntity getEntity) throws Exception {
-				return getEntity._id != null &&
-						getEntity.string.equals("Test") &&
-						getEntity.time == singleTime;
-			}
-		};
 	}
 
 	@Test
-	public void testSimplePutCountGetDelete() {
+	public void db_simplePutCountGetDelete() {
 
 		final TestEntity testEntity = new TestEntity();
+		final long time = System.currentTimeMillis();
 		testEntity.string = "Test";
-		testEntity.time = singleTime;
+		testEntity.time = time;
 
 		// Simple put of new item
 		assertNull(testEntity._id);
@@ -67,7 +58,14 @@ public class CrudTest {
 		// Get returns correct item
 		rxDatabase.get(TestEntity.class, testEntity._id)
 				.test()
-				.assertValue(isDefaultTestEntity);
+				.assertValue(new Predicate<TestEntity>() {
+					@Override
+					public boolean test(TestEntity testEntity) throws Exception {
+						return testEntity._id != null &&
+								testEntity.string.equals("Test") &&
+								testEntity.time == time;
+					}
+				});
 
 		// Count
 		rxDatabase.count(TestEntity.class)
@@ -104,7 +102,7 @@ public class CrudTest {
 	}
 
 	@Test
-	public void testSimplePutUpdateIds() {
+	public void db_simplePutUpdateIds() {
 
 		final TestEntity testEntity = new TestEntity();
 		testEntity.string = "Test";
@@ -125,7 +123,7 @@ public class CrudTest {
 	}
 
 	@Test
-	public void testPutDelete() {
+	public void db_putDelete() {
 
 		final long time = System.currentTimeMillis();
 		final TestEntity testEntity = new TestEntity();
@@ -137,8 +135,7 @@ public class CrudTest {
 		rxDatabase.put(testEntity)
 				.test()
 				.assertTerminated()
-				.assertValue(testEntity)
-				.assertValue(isDefaultTestEntity);
+				.assertValue(testEntity);
 
 		rxDatabase.count(TestEntity.class)
 				.test()
@@ -148,8 +145,7 @@ public class CrudTest {
 		rxDatabase.delete(testEntity)
 				.test()
 				.assertTerminated()
-				.assertValue(testEntity)
-				.assertValue(isDefaultTestEntity);
+				.assertValue(testEntity);
 
 		rxDatabase.count(TestEntity.class)
 				.test()
@@ -163,7 +159,7 @@ public class CrudTest {
 	}
 
 	@Test
-	public void testActionPutDelete() {
+	public void db_actionPutDelete() {
 
 		final long time = System.currentTimeMillis();
 		final TestEntity testEntity = new TestEntity();
@@ -175,20 +171,26 @@ public class CrudTest {
 		Single.just(testEntity).doOnSuccess(rxDatabase.<TestEntity>put())
 				.test()
 				.assertTerminated()
-				.assertValue(testEntity)
-				.assertValue(isDefaultTestEntity);
+				.assertValue(testEntity);
 
 		rxDatabase.count(TestEntity.class)
 				.test()
 				.assertValue(1L);
 
 		// Delete as side effect
-		rxDatabase.get(TestEntity.class, testEntity._id)
+		final Long getId = testEntity._id;
+		rxDatabase.get(TestEntity.class, getId)
 				.doOnSuccess(rxDatabase.<TestEntity>delete())
 				.test()
 				.assertTerminated()
-				.assertValue(testEntity)
-				.assertValue(isDefaultTestEntity);
+				.assertValue(new Predicate<TestEntity>() {
+					@Override
+					public boolean test(TestEntity testEntity) throws Exception {
+						return testEntity._id == getId.longValue() &&
+								testEntity.string.equals("Action") &&
+								testEntity.time == time;
+					}
+				});
 
 		rxDatabase.count(TestEntity.class)
 				.test()
@@ -202,7 +204,7 @@ public class CrudTest {
 	}
 
 	@Test
-	public void testMultiPutGetDelete() {
+	public void db_multiPutGetDelete() {
 
 		Flowable<Integer> range = Flowable.range(1, 10);
 		Flowable<TestEntity> rangeAsEntities = range.map(new Function<Integer, TestEntity>() {
@@ -237,15 +239,16 @@ public class CrudTest {
 						return Pair.create(id, testEntity);
 					}
 				}
-		).test()
-				.assertValue(new Predicate<Pair<Integer, TestEntity>>() {
+		)
+				.doOnNext(new Consumer<Pair<Integer, TestEntity>>() {
 					@Override
-					public boolean test(Pair<Integer, TestEntity> pair) throws Exception {
-						return pair.second._id.intValue() == pair.first &&
-								pair.second.string.equals("Multi") &&
-								pair.second.time == pair.first;
+					public void accept(Pair<Integer, TestEntity> pair) throws Exception {
+						assertTrue(pair.second._id.intValue() == pair.first);
+						assertTrue(pair.second.string.equals("Multi"));
+						assertEquals(pair.second.time, pair.first.longValue());
 					}
-				});
+				})
+				.test();
 
 		// Delete the items with assigned ids 1 to 10
 		range.flatMapSingle(new Function<Integer, Single<Boolean>>() {

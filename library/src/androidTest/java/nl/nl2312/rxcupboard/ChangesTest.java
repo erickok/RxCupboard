@@ -6,10 +6,23 @@ import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import io.reactivex.Flowable;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Predicate;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.CupboardBuilder;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class ChangesTest {
@@ -29,8 +42,25 @@ public class ChangesTest {
 		rxDatabase = RxCupboard.with(cupboard, db);
 	}
 
-	/*@Test
-	public void testAllAndSpecificChanges() {
+	@Test
+	public void db_allAndSpecificChanges() {
+
+		// Add observable to all database changes and one for only changes in TestEntity2
+		final AtomicInteger changeAllCount = new AtomicInteger();
+		final AtomicInteger changeSpecificCount = new AtomicInteger();
+		Disposable allChanges = rxDatabase.changes().subscribe(new Consumer<DatabaseChange>() {
+			@Override
+			public void accept(DatabaseChange databaseChange) throws Exception {
+				changeAllCount.getAndIncrement();
+			}
+		});
+		Disposable specificChanges = rxDatabase.changes(TestEntity2.class).subscribe(new Consumer<DatabaseChange<TestEntity2>>() {
+			@Override
+			public void accept(DatabaseChange<TestEntity2> databaseChange) throws Exception {
+				assertTrue(databaseChange.entity() != null);
+				changeSpecificCount.getAndIncrement();
+			}
+		});
 
 		long time = System.currentTimeMillis();
 		final TestEntity testEntity = new TestEntity();
@@ -40,8 +70,8 @@ public class ChangesTest {
 		testEntity2.date = new Date(time);
 
 		// Simple insert
-		rxDatabase.put(testEntity);
-		rxDatabase.put(testEntity2);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
 		assertEquals(2, changeAllCount.get());
 		assertEquals(1, changeSpecificCount.get());
 
@@ -50,35 +80,36 @@ public class ChangesTest {
 		testEntity.string = "Updated";
 		testEntity.time = updatedTime;
 		testEntity2.date = new Date(updatedTime);
-		rxDatabase.put(testEntity);
-		rxDatabase.put(testEntity2);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
 		assertEquals(4, changeAllCount.get());
 		assertEquals(2, changeSpecificCount.get());
 
 		// Simple delete
-		rxDatabase.delete(testEntity);
-		rxDatabase.delete(testEntity2);
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
 		assertEquals(6, changeAllCount.get());
 		assertEquals(3, changeSpecificCount.get());
 
 		// Non-existing delete call causes no changes
-		rxDatabase.delete(testEntity);
-		rxDatabase.delete(testEntity2);
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
 		assertEquals(6, changeAllCount.get());
 		assertEquals(3, changeSpecificCount.get());
 
-		allChanges.unsubscribe();
-		specificChanges.unsubscribe();
+		allChanges.dispose();
+		specificChanges.dispose();
 
 	}
 
-	public void testChangesSubscription() {
+	@Test
+	public void db_changesSubscription() {
 
 		// Add observable to all database changes
 		final AtomicInteger changeCount = new AtomicInteger();
-		Subscription changes = rxDatabase.changes().subscribe(new Action1<DatabaseChange>() {
+		Disposable changes = rxDatabase.changes().subscribe(new Consumer<DatabaseChange>() {
 			@Override
-			public void call(DatabaseChange databaseChange) {
+			public void accept(DatabaseChange databaseChange) throws Exception {
 				changeCount.getAndIncrement();
 			}
 		});
@@ -87,40 +118,41 @@ public class ChangesTest {
 		testEntity2.date = new Date(System.currentTimeMillis());
 
 		// Simple insert
-		rxDatabase.put(testEntity2);
+		rxDatabase.putDirect(testEntity2);
 		assertEquals(1, changeCount.get());
 
 		// Simple update
 		testEntity2.date = new Date(System.currentTimeMillis());
-		rxDatabase.put(testEntity2);
+		rxDatabase.putDirect(testEntity2);
 		assertEquals(2, changeCount.get());
 
 		// Simple delete
-		rxDatabase.delete(testEntity2);
+		rxDatabase.deleteDirect(testEntity2);
 		assertEquals(3, changeCount.get());
 
 		// Unsubscribe from changes and repeat operations
-		changes.unsubscribe();
+		changes.dispose();
 
 		final TestEntity2 pausedEntity2 = new TestEntity2();
 		pausedEntity2.date = new Date(System.currentTimeMillis());
 
 		// Simple insert
-		rxDatabase.put(pausedEntity2);
+		rxDatabase.putDirect(pausedEntity2);
 		assertEquals(3, changeCount.get());
 
 		// Simple update
 		pausedEntity2.date = new Date(System.currentTimeMillis());
-		rxDatabase.put(pausedEntity2);
+		rxDatabase.putDirect(pausedEntity2);
 		assertEquals(3, changeCount.get());
 
 		// Simple delete
-		rxDatabase.delete(pausedEntity2);
+		rxDatabase.deleteDirect(pausedEntity2);
 		assertEquals(3, changeCount.get());
 
 	}
 
-	public void testChangedContent() {
+	@Test
+	public void db_changedContent() {
 
 		final TestEntity testEntity = new TestEntity();
 		testEntity.string = "Test";
@@ -131,11 +163,11 @@ public class ChangesTest {
 		final AtomicInteger insertCount = new AtomicInteger();
 		final AtomicInteger updateCount = new AtomicInteger();
 		final AtomicInteger deleteCount = new AtomicInteger();
-		CompositeSubscription allChanges = new CompositeSubscription();
+		CompositeDisposable allChanges = new CompositeDisposable();
 
-		allChanges.add(rxDatabase.changes().subscribe(new Action1<DatabaseChange>() {
+		allChanges.add(rxDatabase.changes().subscribe(new Consumer<DatabaseChange>() {
 			@Override
-			public void call(DatabaseChange databaseChange) {
+			public void accept(DatabaseChange databaseChange) throws Exception {
 				changesCount.getAndIncrement();
 				assertTrue(databaseChange.entity() instanceof TestEntity);
 				TestEntity changed = (TestEntity) databaseChange.entity();
@@ -145,54 +177,54 @@ public class ChangesTest {
 				assertEquals(testEntity.time, changed.time);
 			}
 		}));
-		allChanges.add(rxDatabase.changes().filter(new Func1<DatabaseChange, Boolean>() {
+		allChanges.add(rxDatabase.changes().filter(new Predicate<DatabaseChange>() {
 			@Override
-			public Boolean call(DatabaseChange databaseChange) {
+			public boolean test(DatabaseChange databaseChange) throws Exception {
 				return databaseChange instanceof DatabaseChange.DatabaseInsert;
 			}
-		}).subscribe(new Action1<DatabaseChange>() {
+		}).subscribe(new Consumer<DatabaseChange>() {
 			@Override
-			public void call(DatabaseChange databaseChange) {
+			public void accept(DatabaseChange databaseChange) throws Exception {
 				insertCount.getAndIncrement();
 			}
 		}));
-		allChanges.add(rxDatabase.changes().filter(new Func1<DatabaseChange, Boolean>() {
+		allChanges.add(rxDatabase.changes().filter(new Predicate<DatabaseChange>() {
 			@Override
-			public Boolean call(DatabaseChange databaseChange) {
+			public boolean test(DatabaseChange databaseChange) throws Exception {
 				return databaseChange instanceof DatabaseChange.DatabaseUpdate;
 			}
-		}).subscribe(new Action1<DatabaseChange>() {
+		}).subscribe(new Consumer<DatabaseChange>() {
 			@Override
-			public void call(DatabaseChange databaseChange) {
+			public void accept(DatabaseChange databaseChange) throws Exception {
 				updateCount.getAndIncrement();
 			}
 		}));
-		allChanges.add(rxDatabase.changes().filter(new Func1<DatabaseChange, Boolean>() {
+		allChanges.add(rxDatabase.changes().filter(new Predicate<DatabaseChange>() {
 			@Override
-			public Boolean call(DatabaseChange databaseChange) {
+			public boolean test(DatabaseChange databaseChange) throws Exception {
 				return databaseChange instanceof DatabaseChange.DatabaseDelete;
 			}
-		}).subscribe(new Action1<DatabaseChange>() {
+		}).subscribe(new Consumer<DatabaseChange>() {
 			@Override
-			public void call(DatabaseChange databaseChange) {
+			public void accept(DatabaseChange databaseChange) throws Exception {
 				deleteCount.getAndIncrement();
 			}
 		}));
 
 		// Simple insert/update/delete
-		rxDatabase.put(testEntity);
+		rxDatabase.putDirect(testEntity);
 		testEntity.string = "Updated";
 		testEntity.time = System.currentTimeMillis();
-		rxDatabase.put(testEntity);
-		rxDatabase.delete(testEntity);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity);
 
 		// Action insert/update/delete
 		testEntity._id = null;
 		testEntity.string = "Renew";
 		testEntity.time = System.currentTimeMillis();
-		Observable.just(testEntity).doOnNext(rxDatabase.put()).doOnNext(new Action1<TestEntity>() {
+		Flowable.just(testEntity).doOnNext(rxDatabase.put()).doOnNext(new Consumer<TestEntity>() {
 			@Override
-			public void call(TestEntity testEntity) {
+			public void accept(TestEntity testEntity) throws Exception {
 				testEntity.string = "Renew updated";
 			}
 		}).doOnNext(rxDatabase.put()).doOnNext(rxDatabase.delete()).subscribe();
@@ -206,13 +238,14 @@ public class ChangesTest {
 
 	}
 
-	public void testOnDatabaseChangeAction() {
+	@Test
+	public void db_onDatabaseChangeAction() {
 
 		// Observe all database changes using the OnDatabaseChange default action
 		final AtomicInteger insertCount = new AtomicInteger();
 		final AtomicInteger updateCount = new AtomicInteger();
 		final AtomicInteger deleteCount = new AtomicInteger();
-		Subscription changes = rxDatabase.changes(TestEntity.class).subscribe(new OnDatabaseChange<TestEntity>() {
+		Disposable changes = rxDatabase.changes(TestEntity.class).subscribe(new OnDatabaseChange<TestEntity>() {
 			@Override
 			public void onInsert(TestEntity entity) {
 				insertCount.getAndIncrement();
@@ -235,7 +268,7 @@ public class ChangesTest {
 		testEntity.time = time;
 
 		// Simple insert
-		rxDatabase.put(testEntity);
+		rxDatabase.putDirect(testEntity);
 		assertEquals(1, insertCount.get());
 		assertEquals(0, updateCount.get());
 		assertEquals(0, deleteCount.get());
@@ -244,26 +277,26 @@ public class ChangesTest {
 		long updatedTime = System.currentTimeMillis();
 		testEntity.string = "Updated";
 		testEntity.time = updatedTime;
-		rxDatabase.put(testEntity);
+		rxDatabase.putDirect(testEntity);
 		assertEquals(1, insertCount.get());
 		assertEquals(1, updateCount.get());
 		assertEquals(0, deleteCount.get());
 
 		// Simple delete
-		rxDatabase.delete(testEntity);
+		rxDatabase.deleteDirect(testEntity);
 		assertEquals(1, insertCount.get());
 		assertEquals(1, updateCount.get());
 		assertEquals(1, deleteCount.get());
 
 		// Non-existing delete call causes no changes
-		rxDatabase.delete(testEntity);
+		rxDatabase.deleteDirect(testEntity);
 		assertEquals(1, insertCount.get());
 		assertEquals(1, updateCount.get());
 		assertEquals(1, deleteCount.get());
 
-		changes.unsubscribe();
+		changes.dispose();
 
-	}*/
+	}
 
 	@After
 	public void tearDown() throws Exception {
