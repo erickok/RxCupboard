@@ -38,13 +38,7 @@ public class RxDatabase {
 	}
 
 	public <T> Flowable<DatabaseChange<T>> changes(final Class<T> entityClass) {
-		return triggers.filter(new Predicate<DatabaseChange>() {
-			@Override
-			public boolean test(DatabaseChange event) throws Exception {
-				// Only let through change events for a specific table/class
-				return entityClass.isAssignableFrom(event.entityClass());
-			}
-		}).map(new Function<DatabaseChange, DatabaseChange<T>>() {
+		return triggers.filter(isEventOf(entityClass)).map(new Function<DatabaseChange, DatabaseChange<T>>() {
 			@Override
 			public DatabaseChange<T> apply(DatabaseChange raw) throws Exception {
 				// Cast as we are now sure to have only DatabaseChange events of type T
@@ -53,6 +47,65 @@ public class RxDatabase {
 			}
 		}).hide();
 	}
+
+	public Flowable<DatabaseChange.DatabaseInsert> inserts() {
+		return triggers.ofType(DatabaseChange.DatabaseInsert.class).hide();
+	}
+
+	public <T> Flowable<DatabaseChange.DatabaseInsert<T>> inserts(final Class<T> entityClass) {
+		return triggers.filter(isEventOf(entityClass)).ofType(DatabaseChange.DatabaseInsert.class).map(new Function<DatabaseChange
+				.DatabaseInsert, DatabaseChange.DatabaseInsert<T>>() {
+			@Override
+			public DatabaseChange.DatabaseInsert<T> apply(DatabaseChange.DatabaseInsert raw) throws Exception {
+				// Cast as we are now sure to have only DatabaseChange events of type T
+				//noinspection unchecked
+				return raw;
+			}
+		}).hide();
+	}
+
+	public Flowable<DatabaseChange.DatabaseUpdate> updates() {
+		return triggers.ofType(DatabaseChange.DatabaseUpdate.class).hide();
+	}
+
+	public <T> Flowable<DatabaseChange.DatabaseUpdate<T>> updates(final Class<T> entityClass) {
+		return triggers.filter(isEventOf(entityClass)).ofType(DatabaseChange.DatabaseUpdate.class).map(new Function<DatabaseChange
+				.DatabaseUpdate, DatabaseChange.DatabaseUpdate<T>>() {
+			@Override
+			public DatabaseChange.DatabaseUpdate<T> apply(DatabaseChange.DatabaseUpdate raw) throws Exception {
+				// Cast as we are now sure to have only DatabaseChange events of type T
+				//noinspection unchecked
+				return raw;
+			}
+		}).hide();
+	}
+
+	public Flowable<DatabaseChange.DatabaseDelete> deletes() {
+		return triggers.ofType(DatabaseChange.DatabaseDelete.class).hide();
+	}
+
+	public <T> Flowable<DatabaseChange.DatabaseDelete<T>> deletes(final Class<T> entityClass) {
+		return triggers.filter(isEventOf(entityClass)).ofType(DatabaseChange.DatabaseDelete.class).map(new Function<DatabaseChange
+				.DatabaseDelete, DatabaseChange.DatabaseDelete<T>>() {
+			@Override
+			public DatabaseChange.DatabaseDelete<T> apply(DatabaseChange.DatabaseDelete raw) throws Exception {
+				// Cast as we are now sure to have only DatabaseChange events of type T
+				//noinspection unchecked
+				return raw;
+			}
+		}).hide();
+	}
+
+	private <T> Predicate<DatabaseChange> isEventOf(final Class<T> entityClass) {
+		return new Predicate<DatabaseChange>() {
+			@Override
+			public boolean test(DatabaseChange event) throws Exception {
+				// Only let through change events for a specific table/class
+				return entityClass.isAssignableFrom(event.entityClass());
+			}
+		};
+	}
+
 
 	@SuppressWarnings("unchecked") // Cupboard EntityConverter type is lost as it only accepts Class<?>
 	@Deprecated

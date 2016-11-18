@@ -43,7 +43,7 @@ public class ChangesTest {
 	}
 
 	@Test
-	public void db_allAndSpecificChanges() {
+	public void changes_allAndSpecific() {
 
 		// Add observable to all database changes and one for only changes in TestEntity2
 		final AtomicInteger changeAllCount = new AtomicInteger();
@@ -51,6 +51,7 @@ public class ChangesTest {
 		Disposable allChanges = rxDatabase.changes().subscribe(new Consumer<DatabaseChange>() {
 			@Override
 			public void accept(DatabaseChange databaseChange) throws Exception {
+				assertTrue(databaseChange.entity() != null);
 				changeAllCount.getAndIncrement();
 			}
 		});
@@ -103,7 +104,7 @@ public class ChangesTest {
 	}
 
 	@Test
-	public void db_changesSubscription() {
+	public void changes_onSubscribed() {
 
 		// Add observable to all database changes
 		final AtomicInteger changeCount = new AtomicInteger();
@@ -152,7 +153,7 @@ public class ChangesTest {
 	}
 
 	@Test
-	public void db_changedContent() {
+	public void changes_content() {
 
 		final TestEntity testEntity = new TestEntity();
 		testEntity.string = "Test";
@@ -239,7 +240,7 @@ public class ChangesTest {
 	}
 
 	@Test
-	public void db_onDatabaseChangeAction() {
+	public void changes_onDatabaseChangeAction() {
 
 		// Observe all database changes using the OnDatabaseChange default action
 		final AtomicInteger insertCount = new AtomicInteger();
@@ -248,16 +249,19 @@ public class ChangesTest {
 		Disposable changes = rxDatabase.changes(TestEntity.class).subscribe(new OnDatabaseChange<TestEntity>() {
 			@Override
 			public void onInsert(TestEntity entity) {
+				assertTrue(entity != null);
 				insertCount.getAndIncrement();
 			}
 
 			@Override
 			public void onUpdate(TestEntity entity) {
+				assertTrue(entity != null);
 				updateCount.getAndIncrement();
 			}
 
 			@Override
 			public void onDelete(TestEntity entity) {
+				assertTrue(entity != null);
 				deleteCount.getAndIncrement();
 			}
 		});
@@ -295,6 +299,177 @@ public class ChangesTest {
 		assertEquals(1, deleteCount.get());
 
 		changes.dispose();
+
+	}
+
+	@Test
+	public void inserts_allAndSpecific() {
+
+		// Add observable to all database inserts and one for only inserts in TestEntity2
+		final AtomicInteger insertAllCount = new AtomicInteger();
+		final AtomicInteger insertSpecificCount = new AtomicInteger();
+		Disposable allInserts = rxDatabase.inserts().subscribe(new Consumer<DatabaseChange.DatabaseInsert>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseInsert databaseInsert) throws Exception {
+				assertTrue(databaseInsert.entity() != null);
+				insertAllCount.getAndIncrement();
+			}
+		});
+		Disposable specificInserts = rxDatabase.inserts(TestEntity2.class).subscribe(new Consumer<DatabaseChange.DatabaseInsert<TestEntity2>>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseInsert<TestEntity2> databaseInsert) throws Exception {
+				assertTrue(databaseInsert.entity() != null);
+				insertSpecificCount.getAndIncrement();
+			}
+		});
+
+		long time = System.currentTimeMillis();
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Test";
+		testEntity.time = time;
+		final TestEntity2 testEntity2 = new TestEntity2();
+		testEntity2.date = new Date(time);
+
+		// Simple insert
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(2, insertAllCount.get());
+		assertEquals(1, insertSpecificCount.get());
+
+		// Simple update (no change in insert counts)
+		long updatedTime = System.currentTimeMillis();
+		testEntity.string = "Updated";
+		testEntity.time = updatedTime;
+		testEntity2.date = new Date(updatedTime);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(2, insertAllCount.get());
+		assertEquals(1, insertSpecificCount.get());
+
+		// Simple delete (no change in insert counts)
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
+		assertEquals(2, insertAllCount.get());
+		assertEquals(1, insertSpecificCount.get());
+
+		allInserts.dispose();
+		specificInserts.dispose();
+
+	}
+
+	@Test
+	public void updates_allAndSpecific() {
+
+		// Add observable to all database inserts and one for only inserts in TestEntity2
+		final AtomicInteger updateAllCount = new AtomicInteger();
+		final AtomicInteger updateSpecificCount = new AtomicInteger();
+		Disposable allUpdates = rxDatabase.updates().subscribe(new Consumer<DatabaseChange.DatabaseUpdate>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseUpdate databaseUpdate) throws Exception {
+				assertTrue(databaseUpdate.entity() != null);
+				updateAllCount.getAndIncrement();
+			}
+		});
+		Disposable specificUpdates = rxDatabase.updates(TestEntity2.class).subscribe(new Consumer<DatabaseChange.DatabaseUpdate<TestEntity2>>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseUpdate<TestEntity2> databaseUpdate) throws Exception {
+				assertTrue(databaseUpdate.entity() != null);
+				updateSpecificCount.getAndIncrement();
+			}
+		});
+
+		long time = System.currentTimeMillis();
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Test";
+		testEntity.time = time;
+		final TestEntity2 testEntity2 = new TestEntity2();
+		testEntity2.date = new Date(time);
+
+		// Simple insert
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(0, updateAllCount.get());
+		assertEquals(0, updateSpecificCount.get());
+
+		// Simple update (no change in insert counts)
+		long updatedTime = System.currentTimeMillis();
+		testEntity.string = "Updated";
+		testEntity.time = updatedTime;
+		testEntity2.date = new Date(updatedTime);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(2, updateAllCount.get());
+		assertEquals(1, updateSpecificCount.get());
+
+		// Simple delete (no change in insert counts)
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
+		assertEquals(2, updateAllCount.get());
+		assertEquals(1, updateSpecificCount.get());
+
+		allUpdates.dispose();
+		specificUpdates.dispose();
+
+	}
+
+	@Test
+	public void deletes_allAndSpecific() {
+
+		// Add observable to all database deletes and one for only deletes in TestEntity2
+		final AtomicInteger deleteAllCount = new AtomicInteger();
+		final AtomicInteger deleteSpecificCount = new AtomicInteger();
+		Disposable allDeletes = rxDatabase.deletes().subscribe(new Consumer<DatabaseChange.DatabaseDelete>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseDelete databaseDelete) throws Exception {
+				assertTrue(databaseDelete.entity() != null);
+				deleteAllCount.getAndIncrement();
+			}
+		});
+		Disposable specificDeletes = rxDatabase.deletes(TestEntity2.class).subscribe(new Consumer<DatabaseChange.DatabaseDelete<TestEntity2>>() {
+			@Override
+			public void accept(DatabaseChange.DatabaseDelete<TestEntity2> databaseDelete) throws Exception {
+				assertTrue(databaseDelete.entity() != null);
+				deleteSpecificCount.getAndIncrement();
+			}
+		});
+
+		long time = System.currentTimeMillis();
+		final TestEntity testEntity = new TestEntity();
+		testEntity.string = "Test";
+		testEntity.time = time;
+		final TestEntity2 testEntity2 = new TestEntity2();
+		testEntity2.date = new Date(time);
+
+		// Simple insert
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(0, deleteAllCount.get());
+		assertEquals(0, deleteSpecificCount.get());
+
+		// Simple update (no change in insert counts)
+		long updatedTime = System.currentTimeMillis();
+		testEntity.string = "Updated";
+		testEntity.time = updatedTime;
+		testEntity2.date = new Date(updatedTime);
+		rxDatabase.putDirect(testEntity);
+		rxDatabase.putDirect(testEntity2);
+		assertEquals(0, deleteAllCount.get());
+		assertEquals(0, deleteSpecificCount.get());
+
+		// Simple delete (no change in insert counts)
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
+		assertEquals(2, deleteAllCount.get());
+		assertEquals(1, deleteSpecificCount.get());
+
+		// Non-existing delete call causes no changes
+		rxDatabase.deleteDirect(testEntity);
+		rxDatabase.deleteDirect(testEntity2);
+		assertEquals(2, deleteAllCount.get());
+		assertEquals(1, deleteSpecificCount.get());
+
+		allDeletes.dispose();
+		specificDeletes.dispose();
 
 	}
 
