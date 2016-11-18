@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard.sample.model;
+package nl.nl2312.rxcupboard2.sample.model;
 
 public class Item {
 

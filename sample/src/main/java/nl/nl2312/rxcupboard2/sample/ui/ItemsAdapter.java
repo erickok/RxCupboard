@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard.sample.ui;
+package nl.nl2312.rxcupboard2.sample.ui;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -10,7 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.nl2312.rxcupboard.sample.model.Item;
+import nl.nl2312.rxcupboard2.sample.model.Item;
 
 public class ItemsAdapter extends BaseAdapter {
 

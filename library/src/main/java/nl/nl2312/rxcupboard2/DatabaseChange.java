@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard;
+package nl.nl2312.rxcupboard2;
 
 public abstract class DatabaseChange<T> {
 

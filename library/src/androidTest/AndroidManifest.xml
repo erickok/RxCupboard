@@ -1,5 +1,5 @@
 <manifest
-	package="nl.nl2312.rxcupboard"
+	package="nl.nl2312.rxcupboard2"
 	xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<uses-permission android:name="android.permission.READ_CONTACTS" />

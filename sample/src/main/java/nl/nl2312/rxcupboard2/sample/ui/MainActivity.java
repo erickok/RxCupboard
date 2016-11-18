@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard.sample.ui;
+package nl.nl2312.rxcupboard2.sample.ui;
 
 import android.app.Activity;
 import android.database.sqlite.SQLiteDatabase;
@@ -15,12 +15,12 @@ import com.jakewharton.rxbinding.widget.RxTextView;
 
 import java.util.List;
 
-import nl.nl2312.rxcupboard.OnDatabaseChange;
-import nl.nl2312.rxcupboard.RxCupboard;
-import nl.nl2312.rxcupboard.RxDatabase;
-import nl.nl2312.rxcupboard.sample.CupboardDbHelper;
-import nl.nl2312.rxcupboard.sample.R;
-import nl.nl2312.rxcupboard.sample.model.Item;
+import nl.nl2312.rxcupboard2.OnDatabaseChange;
+import nl.nl2312.rxcupboard2.RxCupboard;
+import nl.nl2312.rxcupboard2.RxDatabase;
+import nl.nl2312.rxcupboard2.sample.CupboardDbHelper;
+import nl.nl2312.rxcupboard2.sample.R;
+import nl.nl2312.rxcupboard2.sample.model.Item;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;

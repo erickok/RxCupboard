@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard;
+package nl.nl2312.rxcupboard2;
 
 import android.content.ContentUris;
 import android.content.Context;
@@ -6,10 +6,7 @@ import android.net.Uri;
 
 import java.util.concurrent.Callable;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.FlowableEmitter;
-import io.reactivex.FlowableOnSubscribe;
 import io.reactivex.functions.Consumer;
 import nl.qbusict.cupboard.Cupboard;
 import nl.qbusict.cupboard.ProviderCompartment;

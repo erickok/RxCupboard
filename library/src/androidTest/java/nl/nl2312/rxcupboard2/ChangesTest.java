@@ -1,4 +1,4 @@
-package nl.nl2312.rxcupboard;
+package nl.nl2312.rxcupboard2;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.test.InstrumentationRegistry;

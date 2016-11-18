@@ -1,10 +1,10 @@
-package nl.nl2312.rxcupboard.sample;
+package nl.nl2312.rxcupboard2.sample;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import nl.nl2312.rxcupboard.sample.model.Item;
+import nl.nl2312.rxcupboard2.sample.model.Item;
 
 import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 

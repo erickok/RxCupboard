@@ -3,7 +3,7 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical"
-	tools:context="nl.nl2312.rxcupboard.sample.ui.MainActivity">
+	tools:context="nl.nl2312.rxcupboard2.sample.ui.MainActivity">
 
 	<ListView
 		android:id="@+id/itemsList"
