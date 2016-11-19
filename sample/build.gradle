@@ -8,8 +8,8 @@ android {
         applicationId "nl.nl2312.rxcupboard"
         minSdkVersion 15
         targetSdkVersion 25
-        versionCode 20
-        versionName "2.0-dev"
+        versionCode 21
+        versionName "2.0-rc1"
 
         jackOptions {
             enabled true
