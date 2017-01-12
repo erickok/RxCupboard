@@ -2,19 +2,19 @@ apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    buildToolsVersion "25.0.1"
 
     defaultConfig {
         minSdkVersion 8
         targetSdkVersion 25
-        versionCode 21
-        versionName "2.0-rc1"
+        versionCode 22
+        versionName "2.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 }
 
 dependencies {
-    compile 'io.reactivex.rxjava2:rxjava:2.0.0'
+    compile 'io.reactivex.rxjava2:rxjava:2.0.4'
     compile 'nl.qbusict:cupboard:2.1.4'
 
     androidTestCompile 'com.android.support.test:runner:0.5'
